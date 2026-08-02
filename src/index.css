@@ -18,8 +18,10 @@ body {
 }
 
 /* True orientation lock isn't reliably available in iOS Safari PWAs, so
-   instead hide the app and show a rotate prompt when in landscape. */
-@media (orientation: landscape) {
+   instead hide the app and show a rotate prompt when in landscape.
+   max-height guards against desktop browsers, which are also
+   "landscape" but aren't phones being turned sideways. */
+@media (orientation: landscape) and (max-height: 500px) {
   #root {
     display: none;
   }
