@@ -52,11 +52,12 @@ export function TracingScreen({ letters, startIndex, onExit }: Props) {
       </div>
       <div className="bottom-bar">
         <StarRating stars={displayedStars} />
-        {lastStars !== null && (
+        {lastStars !== null && lastStars >= 1 && (
           <button className="next-btn" onClick={handleNext}>
             Next letter →
           </button>
         )}
+        {lastStars === 0 && <p className="retry-prompt">Try again!</p>}
       </div>
     </div>
   )

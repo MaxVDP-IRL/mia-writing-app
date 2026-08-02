@@ -38,4 +38,9 @@ describe('progressStore', () => {
     localStorage.setItem('mia-writing-progress-v1', '42')
     expect(getAllProgress()).toEqual({})
   })
+
+  it('clamps out-of-range star values from manually-edited storage', () => {
+    localStorage.setItem('mia-writing-progress-v1', '{"letters":{"c":99,"a":-5,"d":1.7}}')
+    expect(getAllProgress()).toEqual({ c: 3, a: 0, d: 2 })
+  })
 })

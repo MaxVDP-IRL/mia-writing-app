@@ -41,3 +41,10 @@
   font-size: 16px;
   font-weight: bold;
 }
+
+.retry-prompt {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff8a3d;
+}

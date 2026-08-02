@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import type { Point } from '../content/geometry'
 import './TracingCanvas.css'
 
@@ -10,6 +10,22 @@ export function TracingCanvas({ onTraceComplete }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [points, setPoints] = useState<Point[]>([])
   const activePointerId = useRef<number | null>(null)
+
+  // Fallback for interrupted traces (call, app backgrounded) when the
+  // browser doesn't fire pointercancel: without this, activePointerId
+  // stays stuck non-null and the canvas becomes permanently unresponsive
+  // to touch. Mirrors the same cleanup as handlePointerCancel, just
+  // triggered by document visibility instead of a pointer event.
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        activePointerId.current = null
+        setPoints([])
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   function toSvgPoint(clientX: number, clientY: number): Point {
     const svg = svgRef.current
