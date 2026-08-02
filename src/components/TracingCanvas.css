@@ -1,0 +1,16 @@
+.tracing-canvas-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none;
+}
+
+.user-trace-path {
+  fill: none;
+  stroke: #ff8a3d;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
