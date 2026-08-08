@@ -1,0 +1,39 @@
+.sticker-book-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 20px;
+}
+
+.sticker-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: #fff3d6;
+}
+
+.sticker-tile-locked {
+  background: #f3efe4;
+  color: #a49b8a;
+}
+
+.sticker-emoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.sticker-name {
+  font-size: 12px;
+  font-weight: bold;
+}

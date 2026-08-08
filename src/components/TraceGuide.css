@@ -1,0 +1,51 @@
+.trace-guide-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.guide-baseline {
+  stroke: #e9b8b8;
+  stroke-width: 2;
+}
+
+.guide-xheight {
+  stroke: #e9e2ce;
+  stroke-width: 2;
+  stroke-dasharray: 8 8;
+}
+
+.guide-path {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.guide-path-active {
+  stroke: #cfcabb;
+}
+
+/* Strokes already drawn fade back so the next one stands out. */
+.guide-path-done {
+  stroke: #ece7db;
+}
+
+.guide-path-pending {
+  stroke: #e4dfd2;
+  stroke-dasharray: 10 12;
+}
+
+.guide-tap {
+  fill: none;
+}
+
+.start-dot {
+  fill: #4caf50;
+}
+
+.direction-arrow {
+  fill: #4caf50;
+}

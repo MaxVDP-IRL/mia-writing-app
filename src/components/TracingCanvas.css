@@ -14,3 +14,7 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.user-trace-dot {
+  fill: #ff8a3d;
+}
