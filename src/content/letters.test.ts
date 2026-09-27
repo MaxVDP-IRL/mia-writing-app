@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { capitals } from './capitals'
 import { letters } from './letters'
-import { ASCENDER_TOP, DESCENDER_BOTTOM, GLYPH_BOX, type Glyph } from './types'
+import { ASCENDER_TOP, BASELINE, DESCENDER_BOTTOM, GLYPH_BOX, type Glyph } from './types'
 
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('')
 
@@ -62,6 +62,22 @@ describe('print capitals', () => {
       expect(capital.joins, capital.id).toBe(false)
       expect(capital.exit, capital.id).toEqual([])
     }
+  })
+
+  it('stands every capital on the baseline and up to capital height', () => {
+    for (const capital of capitals) {
+      const ys = [capital.body, ...capital.extras.map((e) => e.points)].flat().map((p) => p.y)
+      expect(Math.max(...ys), capital.id).toBeGreaterThanOrEqual(BASELINE - 6)
+      expect(Math.min(...ys), capital.id).toBeLessThanOrEqual(50)
+    }
+  })
+
+  it('writes O anticlockwise from the top, as it is taught', () => {
+    const o = capitals.find((c) => c.id === 'O')!.body
+    const top = o[0]
+    expect(top.y).toBeLessThan(50)
+    // Anticlockwise from the top means the pen heads left first.
+    expect(o[3].x).toBeLessThan(top.x)
   })
 
   it('uses capital letter ids', () => {

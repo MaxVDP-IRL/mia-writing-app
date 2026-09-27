@@ -31,11 +31,13 @@ const capitalM = capital(
 
 const capitalS = capital(
   'S',
+  // From the top right, over the top and down to the middle, then round the
+  // other way to sit on the baseline.
   chain(
-    quad({ x: 148, y: 66 }, { x: 108, y: CAP_TOP - 8 }, { x: 82, y: 78 }, 10),
-    quad({ x: 82, y: 78 }, { x: 66, y: 104 }, { x: 112, y: 116 }, 10),
-    quad({ x: 112, y: 116 }, { x: 158, y: 130 }, { x: 140, y: 158 }, 10),
-    quad({ x: 140, y: 158 }, { x: 116, y: BASELINE - 2 }, { x: 74, y: 160 }, 10),
+    quad({ x: 150, y: 64 }, { x: 118, y: CAP_TOP - 14 }, { x: 84, y: 62 }, 10),
+    quad({ x: 84, y: 62 }, { x: 64, y: 100 }, { x: 112, y: 112 }, 10),
+    quad({ x: 112, y: 112 }, { x: 160, y: 124 }, { x: 146, y: 160 }, 10),
+    quad({ x: 146, y: 160 }, { x: 128, y: BASELINE + 14 }, { x: 72, y: 166 }, 10),
   ),
 )
 
@@ -65,7 +67,17 @@ const capitalD = capital(
   ),
 )
 
-const capitalO = capital('O', arc(112, 112, 46, -90, 270, 30))
+/**
+ * An upright oval from capital height down to the baseline, written the way
+ * O is taught: from the top, anticlockwise.
+ */
+function oval(cx: number, rx: number, steps: number) {
+  const cy = (CAP_TOP + BASELINE) / 2
+  const ry = (BASELINE - CAP_TOP) / 2
+  return arc(0, 0, 1, -90, -450, steps).map((p) => ({ x: cx + p.x * rx, y: cy + p.y * ry }))
+}
+
+const capitalO = capital('O', oval(110, 48, 36))
 
 export const capitals: Glyph[] = [capitalA, capitalD, capitalI, capitalM, capitalO, capitalS, capitalT]
 

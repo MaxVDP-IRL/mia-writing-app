@@ -44,6 +44,21 @@ export interface Glyph {
   extras: Stroke[]
   /** Print capitals don't join to the letter that follows them. */
   joins: boolean
+  /**
+   * Round letters start at about 2 o'clock on the bowl, so a join can't run
+   * straight to that start without cutting across the bowl. Instead the join
+   * arrives here, further round the top of the bowl, and the pen runs back
+   * along the bowl to the start — the doubled line along the top of a joined
+   * 'a' or 'o'.
+   */
+  joinVia?: Point
+  /**
+   * The body opens with an up-stroke from the baseline. When the letter before
+   * finishes high (o, v, w, b end at the top of the line), the join runs
+   * across into this up-stroke partway up, rather than dropping down to the
+   * baseline only to climb straight back up.
+   */
+  leadIn?: boolean
 }
 
 export type ItemKind = 'letter' | 'join' | 'word'

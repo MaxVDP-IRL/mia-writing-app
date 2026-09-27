@@ -33,6 +33,18 @@ function bowl(endDeg: number, steps = 24): Point[] {
   return arc(BOWL_CX, BOWL_CY, BOWL_R, BOWL_START_DEG, endDeg, steps)
 }
 
+function bowlPoint(deg: number): Point {
+  const rad = (deg * Math.PI) / 180
+  return { x: BOWL_CX + BOWL_R * Math.cos(rad), y: BOWL_CY + BOWL_R * Math.sin(rad) }
+}
+
+/**
+ * Where a join lands on a bowl that starts at 2 o'clock: about 11 o'clock,
+ * so the join runs back over the top of the bowl to the start rather than
+ * cutting across it.
+ */
+const BOWL_JOIN_VIA = bowlPoint(-122)
+
 function end(points: Point[]): Point {
   return points[points.length - 1]
 }
@@ -64,10 +76,22 @@ interface GlyphSpec {
   exit?: Point[]
   extras?: Stroke[]
   joins?: boolean
+  joinVia?: Point
+  leadIn?: boolean
 }
 
-function glyph({ id, family, order, body, exit, extras = [], joins = true }: GlyphSpec): Glyph {
-  return { id, family, order, body, exit: exit ?? flick(end(body)), extras, joins }
+function glyph({ id, family, order, body, exit, extras = [], joins = true, joinVia, leadIn }: GlyphSpec): Glyph {
+  return {
+    id,
+    family,
+    order,
+    body,
+    exit: exit ?? flick(end(body)),
+    extras,
+    joins,
+    ...(joinVia ? { joinVia } : {}),
+    ...(leadIn ? { leadIn } : {}),
+  }
 }
 
 function tap(x: number, y: number): Stroke {
@@ -78,12 +102,13 @@ function tap(x: number, y: number): Stroke {
 // Family 1 — curly caterpillars: the anticlockwise round letters.
 // ---------------------------------------------------------------------------
 
-const letterC = glyph({ id: 'c', family: 'curly', order: 0, body: bowl(BOWL_OPEN_DEG, 22) })
+const letterC = glyph({ id: 'c', family: 'curly', order: 0, body: bowl(BOWL_OPEN_DEG, 22), joinVia: BOWL_JOIN_VIA })
 
 const letterA = glyph({
   id: 'a',
   family: 'curly',
   order: 1,
+  joinVia: BOWL_JOIN_VIA,
   body: chain(bowl(BOWL_CLOSE_DEG), line({ x: 149.4, y: 131.1 }, { x: 149, y: BASELINE }, 6)),
 })
 
@@ -91,6 +116,7 @@ const letterD = glyph({
   id: 'd',
   family: 'curly',
   order: 2,
+  joinVia: BOWL_JOIN_VIA,
   body: chain(
     bowl(BOWL_CLOSE_DEG),
     line({ x: 149.4, y: 131.1 }, { x: 152, y: ASCENDER_TOP + 4 }, 8),
@@ -102,6 +128,7 @@ const letterG = glyph({
   id: 'g',
   family: 'curly',
   order: 3,
+  joinVia: BOWL_JOIN_VIA,
   body: chain(
     bowl(BOWL_CLOSE_DEG),
     line({ x: 149.4, y: 131.1 }, { x: 146, y: 198 }, 6),
@@ -114,6 +141,8 @@ const letterO = glyph({
   id: 'o',
   family: 'curly',
   order: 4,
+  // Starts at 12 o'clock, so a join lands a little further round at about 10.
+  joinVia: bowlPoint(-140),
   // Starts at the top and sweeps a full circle anticlockwise, then the little
   // curl that turns the pen back to the right so 'o' can join from the top.
   body: chain(
@@ -127,6 +156,7 @@ const letterQ = glyph({
   id: 'q',
   family: 'curly',
   order: 5,
+  joinVia: BOWL_JOIN_VIA,
   body: chain(
     bowl(BOWL_CLOSE_DEG),
     line({ x: 149.4, y: 131.1 }, { x: 146, y: 212 }, 8),
@@ -143,17 +173,24 @@ const letterE = glyph({
   body: chain(line({ x: 74, y: 166 }, { x: 146.3, y: 121.1 }, 8), bowl(BOWL_OPEN_DEG, 22)),
 })
 
+// The bottom of an 's': round the baseline to the left, curling up to meet
+// the up-stroke. Shared so the retrace back along it follows the same curve.
+const S_BOTTOM = quad({ x: 139, y: 150 }, { x: 134, y: 197 }, { x: 96, y: 170 }, 12)
+
 const letterS = glyph({
   id: 's',
   family: 'curly',
   order: 7,
-  // Up to a peak, then a down-stroke that bulges left and crosses the
-  // up-stroke low down — that little crossing is what makes an 's' an 's'
-  // rather than a 'c'.
+  leadIn: true,
+  // The cursive "sail" s: up to a point, then down with the bulge on the
+  // RIGHT, curling round the bottom to touch the up-stroke. The pen then runs
+  // back along the bottom and out — that doubled bottom is how the letter
+  // joins on to whatever comes next.
   body: chain(
-    quad({ x: 90, y: 176 }, { x: 106, y: 142 }, { x: 124, y: 100 }, 10),
-    quad({ x: 124, y: 100 }, { x: 84, y: 122 }, { x: 102, y: 168 }, 12),
-    quad({ x: 102, y: 168 }, { x: 114, y: 178 }, { x: 136, y: 168 }, 8),
+    quad({ x: 86, y: 178 }, { x: 106, y: 152 }, { x: 118, y: 96 }, 10),
+    quad({ x: 118, y: 96 }, { x: 144, y: 114 }, { x: 139, y: 150 }, 10),
+    S_BOTTOM,
+    [...S_BOTTOM].reverse().slice(0, 7),
   ),
 })
 
@@ -161,12 +198,16 @@ const letterF = glyph({
   id: 'f',
   family: 'curly',
   order: 8,
+  leadIn: true,
+  // Up to a loop at the top, straight down below the line, then the lower
+  // loop swings FORWARD (to the right) and closes back on the stem at the
+  // baseline. A loop swinging back to the left would be a 'j' tail.
   body: chain(
     quad({ x: 96, y: 168 }, { x: 118, y: 84 }, { x: 122, y: 42 }, 12),
     quad({ x: 122, y: 42 }, { x: 100, y: ASCENDER_TOP - 2 }, { x: 92, y: 70 }, 8),
-    line({ x: 92, y: 70 }, { x: 102, y: 202 }, 12),
-    quad({ x: 102, y: 202 }, { x: 106, y: DESCENDER_BOTTOM + 4 }, { x: 78, y: 224 }, 8),
-    quad({ x: 78, y: 224 }, { x: 62, y: 210 }, { x: 122, y: 176 }, 12),
+    line({ x: 92, y: 70 }, { x: 103, y: 208 }, 12),
+    quad({ x: 103, y: 208 }, { x: 106, y: DESCENDER_BOTTOM + 6 }, { x: 124, y: 220 }, 8),
+    quad({ x: 124, y: 220 }, { x: 136, y: 196 }, { x: 101, y: 178 }, 10),
   ),
 })
 
@@ -174,12 +215,13 @@ const letterF = glyph({
 // Family 2 — long ladders: the tall straight letters.
 // ---------------------------------------------------------------------------
 
-const letterL = glyph({ id: 'l', family: 'ladder', order: 9, body: chain(loopedAscender(), line({ x: 106, y: 110 }, { x: 124, y: BASELINE }, 8)) })
+const letterL = glyph({ id: 'l', family: 'ladder', order: 9, leadIn: true, body: chain(loopedAscender(), line({ x: 106, y: 110 }, { x: 124, y: BASELINE }, 8)) })
 
 const letterI = glyph({
   id: 'i',
   family: 'ladder',
   order: 10,
+  leadIn: true,
   body: chain(line({ x: 88, y: BASELINE }, { x: 122, y: XHEIGHT_TOP }, 8), line({ x: 122, y: XHEIGHT_TOP }, { x: 126, y: BASELINE }, 8)),
   extras: [tap(128, 70)],
 })
@@ -188,6 +230,7 @@ const letterT = glyph({
   id: 't',
   family: 'ladder',
   order: 11,
+  leadIn: true,
   body: chain(line({ x: 88, y: BASELINE }, { x: 126, y: 54 }, 10), line({ x: 126, y: 54 }, { x: 130, y: BASELINE }, 10)),
   extras: [{ points: line({ x: 94, y: 106 }, { x: 152, y: 102 }, 4), kind: 'trace' }],
 })
@@ -196,6 +239,7 @@ const letterU = glyph({
   id: 'u',
   family: 'ladder',
   order: 12,
+  leadIn: true,
   body: chain(
     line({ x: 78, y: BASELINE }, { x: 106, y: XHEIGHT_TOP }, 8),
     line({ x: 106, y: XHEIGHT_TOP }, { x: 106, y: 162 }, 6),
@@ -209,6 +253,7 @@ const letterJ = glyph({
   id: 'j',
   family: 'ladder',
   order: 13,
+  leadIn: true,
   body: chain(
     line({ x: 88, y: BASELINE }, { x: 122, y: XHEIGHT_TOP }, 8),
     line({ x: 122, y: XHEIGHT_TOP }, { x: 112, y: 204 }, 10),
@@ -222,6 +267,7 @@ const letterY = glyph({
   id: 'y',
   family: 'ladder',
   order: 14,
+  leadIn: true,
   body: chain(
     line({ x: 78, y: BASELINE }, { x: 106, y: XHEIGHT_TOP }, 8),
     line({ x: 106, y: XHEIGHT_TOP }, { x: 106, y: 162 }, 6),
@@ -241,6 +287,7 @@ const letterR = glyph({
   id: 'r',
   family: 'robot',
   order: 15,
+  leadIn: true,
   // The little shoulder — a short rise to a point, then a small hook over —
   // is what keeps 'r' from reading as a one-legged 'n'.
   body: chain(
@@ -255,6 +302,7 @@ const letterB = glyph({
   id: 'b',
   family: 'robot',
   order: 16,
+  leadIn: true,
   body: chain(
     loopedAscender(),
     line({ x: 106, y: 110 }, { x: 104, y: 174 }, 8),
@@ -269,6 +317,7 @@ const letterN = glyph({
   id: 'n',
   family: 'robot',
   order: 17,
+  leadIn: true,
   body: chain(
     line({ x: 78, y: BASELINE }, { x: 104, y: XHEIGHT_TOP }, 8),
     line({ x: 104, y: XHEIGHT_TOP }, { x: 100, y: BASELINE }, 8),
@@ -281,6 +330,7 @@ const letterH = glyph({
   id: 'h',
   family: 'robot',
   order: 18,
+  leadIn: true,
   body: chain(
     loopedAscender(),
     line({ x: 106, y: 110 }, { x: 104, y: BASELINE }, 8),
@@ -293,6 +343,7 @@ const letterM = glyph({
   id: 'm',
   family: 'robot',
   order: 19,
+  leadIn: true,
   body: chain(
     line({ x: 70, y: BASELINE }, { x: 96, y: XHEIGHT_TOP }, 8),
     line({ x: 96, y: XHEIGHT_TOP }, { x: 92, y: BASELINE }, 8),
@@ -307,6 +358,7 @@ const letterK = glyph({
   id: 'k',
   family: 'robot',
   order: 20,
+  leadIn: true,
   body: chain(
     loopedAscender(),
     line({ x: 106, y: 110 }, { x: 104, y: BASELINE }, 8),
@@ -320,6 +372,7 @@ const letterP = glyph({
   id: 'p',
   family: 'robot',
   order: 21,
+  leadIn: true,
   body: chain(
     line({ x: 80, y: 172 }, { x: 106, y: XHEIGHT_TOP }, 8),
     line({ x: 106, y: XHEIGHT_TOP }, { x: 96, y: 220 }, 10),

@@ -63,10 +63,9 @@ function densify(from: Point, to: Point): number {
 
 /**
  * A join that climbs above the letter and drops into its starting point from
- * the upper left. Round letters start at about 2 o'clock on the bowl, so a
- * straight join would cut across the bowl; real cursive carries the stroke
- * over the top instead, which is the doubled line you see along the top of a
- * joined 'a' or 'o'.
+ * the upper left. Round letters are handled more precisely by `retraceJoin`
+ * via their `joinVia` point; this is the fallback for any other letter whose
+ * start a straight join would cut across.
  */
 function overTheTop(from: Point, to: Point): Point[] {
   // Climb gradually across the gap rather than shooting straight up off the
@@ -79,11 +78,68 @@ function overTheTop(from: Point, to: Point): Point[] {
   )
 }
 
+/** Index of the body point nearest `target`, looking only in the first half of the body. */
+function nearestIndex(body: Point[], target: Point): number {
+  let best = 0
+  let bestDistance = Infinity
+  for (let i = 0; i <= Math.floor(body.length / 2); i++) {
+    const distance = Math.hypot(body[i].x - target.x, body[i].y - target.y)
+    if (distance < bestDistance) {
+      best = i
+      bestDistance = distance
+    }
+  }
+  return best
+}
+
+/**
+ * A join into a round letter: sweep up and arrive on the bowl at `via`,
+ * travelling along the bowl, then run back along it to the letter's start.
+ *
+ * The approach curve leaves in whatever direction it likes but arrives tangent
+ * to the bowl, so there's no kink where the join meets the letter and the
+ * retraced stretch sits exactly on top of the bowl.
+ */
+export function retraceJoin(from: Point, body: Point[], via: Point): Point[] {
+  const k = Math.max(1, nearestIndex(body, via))
+  const arrival = body[k]
+  const back = body[k - 1]
+  const length = Math.hypot(back.x - arrival.x, back.y - arrival.y) || 1
+  const heading = { x: (back.x - arrival.x) / length, y: (back.y - arrival.y) / length }
+  const reach = Math.min(40, 0.6 * Math.hypot(arrival.x - from.x, arrival.y - from.y))
+  const control = { x: arrival.x - heading.x * reach, y: arrival.y - heading.y * reach }
+  return chain(quad(from, control, arrival, densify(from, arrival)), body.slice(0, k + 1).reverse())
+}
+
 /** The joining stroke between two letters. */
-function connector(from: Point, to: Point, targetBody: Point[]): Point[] {
+function connector(from: Point, target: Glyph, targetBody: Point[], dx: number): Point[] {
+  const to = targetBody[0]
+  if (target.joinVia) {
+    return retraceJoin(from, targetBody, { x: target.joinVia.x + dx, y: target.joinVia.y })
+  }
   const straight = line(from, to, densify(from, to))
   if (!cutsThrough(straight, targetBody, to)) return straight
   return overTheTop(from, to)
+}
+
+/** A letter that finishes above this line has ended high, at the top of the line. */
+const HIGH_EXIT_Y = 130
+
+/**
+ * Where a join enters a letter's body. Normally at its start; but a letter
+ * with a lead-in up-stroke is entered partway up that stroke when the join
+ * arrives from high up, so the pen doesn't dip to the baseline and back.
+ */
+export function entryIndex(glyph: Glyph, body: Point[], from: Point): number {
+  if (!glyph.leadIn || from.y > HIGH_EXIT_Y) return 0
+  const index = body.findIndex((p) => p.y <= from.y + 4)
+  return index > 0 ? index : 0
+}
+
+/** A gently sagging join, for running across between two letters at the same height. */
+function garland(from: Point, to: Point): Point[] {
+  const control = { x: (from.x + to.x) / 2, y: Math.max(from.y, to.y) + 14 }
+  return quad(from, control, to, densify(from, to))
 }
 
 interface ItemMeta {
@@ -113,12 +169,18 @@ export function composeItem(glyphs: Glyph[], meta: ItemMeta, minWidth = 0): Trac
   let runSegments: Point[][] = []
   glyphs.forEach((glyph, i) => {
     const dx = offsets[i]
-    const body = translate(glyph.body, dx, 0)
+    let body = translate(glyph.body, dx, 0)
 
     if (runSegments.length > 0) {
       const previousSegment = runSegments[runSegments.length - 1]
       const previousEnd = previousSegment[previousSegment.length - 1]
-      runSegments.push(connector(previousEnd, body[0], body))
+      const entry = entryIndex(glyph, body, previousEnd)
+      if (entry > 0) {
+        body = body.slice(entry)
+        runSegments.push(garland(previousEnd, body[0]))
+      } else {
+        runSegments.push(connector(previousEnd, glyph, body, dx))
+      }
     }
     runSegments.push(body)
 
