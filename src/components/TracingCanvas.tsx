@@ -20,8 +20,19 @@ interface Props {
 
 export function TracingCanvas({ viewBox, completedStrokes, expecting, onStrokeStart, onStrokeComplete }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
+  // The stroke in progress lives in a ref: pointer events can arrive faster
+  // than React re-renders, and reading rendered state on release would lose
+  // the last points of a quick stroke — or all of a short flick. `points` is
+  // only a copy for drawing.
+  const stroke = useRef<Point[]>([])
   const [points, setPoints] = useState<Point[]>([])
   const activePointerId = useRef<number | null>(null)
+
+  function clearStroke() {
+    activePointerId.current = null
+    stroke.current = []
+    setPoints([])
+  }
 
   // Fallback for interrupted traces (call, app backgrounded) when the
   // browser doesn't fire pointercancel: without this, activePointerId
@@ -31,8 +42,7 @@ export function TracingCanvas({ viewBox, completedStrokes, expecting, onStrokeSt
   useEffect(() => {
     function handleVisibilityChange() {
       if (document.hidden) {
-        activePointerId.current = null
-        setPoints([])
+        clearStroke()
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -55,30 +65,31 @@ export function TracingCanvas({ viewBox, completedStrokes, expecting, onStrokeSt
     if (activePointerId.current !== null) return
     activePointerId.current = e.pointerId
     svgRef.current?.setPointerCapture(e.pointerId)
-    setPoints([toSvgPoint(e.clientX, e.clientY)])
+    stroke.current = [toSvgPoint(e.clientX, e.clientY)]
+    setPoints(stroke.current)
     onStrokeStart?.()
   }
 
   function handlePointerMove(e: PointerEvent<SVGSVGElement>) {
     if (activePointerId.current !== e.pointerId) return
-    setPoints((prev) => [...prev, toSvgPoint(e.clientX, e.clientY)])
+    stroke.current = [...stroke.current, toSvgPoint(e.clientX, e.clientY)]
+    setPoints(stroke.current)
   }
 
   function handlePointerUp(e: PointerEvent<SVGSVGElement>) {
     if (activePointerId.current !== e.pointerId) return
-    activePointerId.current = null
-    setPoints([])
-    if (points.length === 0) return
+    const finished = stroke.current
+    clearStroke()
+    if (finished.length === 0) return
     // A brush of the screen shouldn't burn the attempt at a letter, but it is
     // exactly what's wanted when the next mark is the dot on an i.
-    if (expecting === 'trace' && pathLength(points) < STRAY_TAP_LENGTH) return
-    onStrokeComplete(points)
+    if (expecting === 'trace' && pathLength(finished) < STRAY_TAP_LENGTH) return
+    onStrokeComplete(finished)
   }
 
   function handlePointerCancel(e: PointerEvent<SVGSVGElement>) {
     if (activePointerId.current !== e.pointerId) return
-    activePointerId.current = null
-    setPoints([])
+    clearStroke()
   }
 
   function toPath(stroke: Point[]): string {
