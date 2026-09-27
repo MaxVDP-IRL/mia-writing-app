@@ -25,4 +25,16 @@ export const WORD_LIST: string[] = [
   'run',
   'the',
   'mum',
+  'Oskar',
+  // Words for the later letter families, so there's word practice right
+  // through the alphabet rather than only for the first few letters.
+  'yes',
+  'hop',
+  'big',
+  'kite',
+  'jump',
+  'box',
+  'fox',
+  'zoo',
+  'van',
 ]

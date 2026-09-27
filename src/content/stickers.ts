@@ -8,8 +8,9 @@ export interface Sticker {
 /**
  * The reward loop: stars earned anywhere in the app add up, and crossing a
  * threshold unlocks the next sticker. Thresholds are spaced so early ones come
- * quickly and later ones pace out across the whole alphabet — 56 items at 3
- * stars each is 168 stars in total.
+ * quickly and later ones pace out across the whole alphabet. There are more
+ * stars on offer than the last sticker needs (every letter, join and word at 3
+ * stars), so the rainbow doesn't demand perfection on everything.
  */
 export const stickers: Sticker[] = [
   { id: 'caterpillar', emoji: '🐛', name: 'Caterpillar', starsRequired: 3 },
