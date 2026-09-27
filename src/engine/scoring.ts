@@ -17,6 +17,14 @@ const MIN_STROKE_WEIGHT = 20
 const STAR_THRESHOLDS = { three: 15, two: 30, one: 55 } as const
 /** Words are drawn smaller on screen, so their tolerance grows with the box. */
 const MAX_SCALE = 3
+/**
+ * A genuine attempt passes close to nearly all of the letter's path; a
+ * scribble in one spot doesn't, however long it goes on. Without this, a
+ * scribble on the start dot averages out to about one letter-width away —
+ * inside the one-star band, and one star unlocks the next letter.
+ */
+const COVERAGE_RADIUS = 34
+const MIN_COVERAGE = 0.8
 
 export interface ScoreResult {
   stars: 0 | 1 | 2 | 3
@@ -32,13 +40,20 @@ function centroid(points: Point[]): Point {
   return { x: sum.x / points.length, y: sum.y / points.length }
 }
 
+/** Fraction of the ideal path that the trace came within `radius` of. */
+function coverage(user: Point[], ideal: Point[], radius: number): number {
+  const reached = ideal.filter((target) => user.some((p) => Math.hypot(p.x - target.x, p.y - target.y) <= radius))
+  return reached.length / ideal.length
+}
+
 /**
  * Average distance between a traced stroke and its ideal, in content units.
  *
  * Points are compared in the order they were drawn, so tracing the right shape
  * backwards scores badly — stroke direction is half of what's being taught.
+ * `scale` widens the tolerance for items drawn smaller on screen.
  */
-export function scoreStroke(userPoints: Point[], ideal: Stroke): number {
+export function scoreStroke(userPoints: Point[], ideal: Stroke, scale = 1): number {
   if (userPoints.length === 0) return Infinity
 
   if (ideal.kind === 'tap') {
@@ -55,6 +70,11 @@ export function scoreStroke(userPoints: Point[], ideal: Stroke): number {
   const count = sampleCount(idealLength)
   const idealSamples = resampleByArcLength(ideal.points, count)
   const userSamples = resampleByArcLength(userPoints, count)
+
+  const denseUser = resampleByArcLength(userPoints, count * 2)
+  if (coverage(denseUser, idealSamples, COVERAGE_RADIUS * scale) < MIN_COVERAGE) {
+    return Infinity
+  }
 
   let total = 0
   for (let i = 0; i < count; i++) {
@@ -77,10 +97,12 @@ export function scoreTrace(userStrokes: Point[][], item: TraceItem): ScoreResult
     return { stars: 0, avgDistance: Infinity }
   }
 
+  const scale = Math.min(MAX_SCALE, item.viewBox.width / GLYPH_BOX)
+
   let weightedTotal = 0
   let weightTotal = 0
   for (let i = 0; i < item.strokes.length; i++) {
-    const distance = scoreStroke(userStrokes[i], item.strokes[i])
+    const distance = scoreStroke(userStrokes[i], item.strokes[i], Math.max(1, scale))
     if (!Number.isFinite(distance)) {
       return { stars: 0, avgDistance: Infinity }
     }
@@ -90,7 +112,6 @@ export function scoreTrace(userStrokes: Point[][], item: TraceItem): ScoreResult
   }
 
   const avgDistance = weightTotal === 0 ? Infinity : weightedTotal / weightTotal
-  const scale = Math.min(MAX_SCALE, item.viewBox.width / GLYPH_BOX)
 
   let stars: 0 | 1 | 2 | 3 = 0
   if (avgDistance <= STAR_THRESHOLDS.three * scale) stars = 3

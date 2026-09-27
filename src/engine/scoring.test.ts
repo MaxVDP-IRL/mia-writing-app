@@ -36,6 +36,29 @@ describe('scoreTrace', () => {
     expect(scoreTrace(scribble, letterO).stars).toBe(0)
   })
 
+  it('gives no stars to a scribble on the start dot, however long it goes on', () => {
+    // One star unlocks the next letter, so scribbling in one place must not
+    // earn it. Zig-zag on the spot until the scribble is as long as the letter.
+    for (const letter of letterItems) {
+      const start = letter.strokes[0].points[0]
+      const scribble: Point[] = []
+      for (let i = 0; i < 200; i++) {
+        scribble.push({ x: start.x + (i % 2 === 0 ? -8 : 8), y: start.y + (i % 4 < 2 ? -6 : 6) })
+      }
+      const strokes = letter.strokes.map((stroke) => (stroke.kind === 'tap' ? stroke.points : scribble))
+      expect(scoreTrace(strokes, letter).stars, letter.label).toBe(0)
+    }
+  })
+
+  it('still rewards a wobbly but genuine attempt', () => {
+    for (const letter of letterItems) {
+      const wobbly = letter.strokes.map((stroke) =>
+        stroke.points.map((p, i) => ({ x: p.x + 7 + (i % 3) * 3, y: p.y - 6 + (i % 2) * 5 })),
+      )
+      expect(scoreTrace(wobbly, letter).stars, letter.label).toBeGreaterThanOrEqual(2)
+    }
+  })
+
   it('drops stars as the trace drifts further from the guide', () => {
     const close = scoreTrace([nudge(letterO.strokes[0].points, 8, 8)], letterO)
     const far = scoreTrace([nudge(letterO.strokes[0].points, 26, 26)], letterO)
