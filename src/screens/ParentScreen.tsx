@@ -5,9 +5,11 @@ import {
   getAllProgress,
   getPin,
   getPracticeDays,
+  getSoundOn,
   getTotalStars,
   resetProgress,
   setPin,
+  setSoundOn,
 } from '../state/progressStore'
 import { currentStreak, longestStreak } from '../state/streak'
 import './ParentScreen.css'
@@ -87,6 +89,7 @@ export function ParentScreen({ onExit }: Props) {
 
   const progress = getAllProgress()
   const days = getPracticeDays()
+  const soundOn = getSoundOn()
   const sections: { title: string; items: TraceItem[] }[] = [
     { title: 'Letters', items: letterItems },
     { title: 'Joins', items: joinItems },
@@ -153,6 +156,22 @@ export function ParentScreen({ onExit }: Props) {
             </section>
           )
         })}
+
+        <div className="parent-setting">
+          <span id="sound-setting-label">Sounds after each go</span>
+          <button
+            className={`toggle-btn ${soundOn ? 'toggle-btn-on' : ''}`}
+            role="switch"
+            aria-checked={soundOn}
+            aria-labelledby="sound-setting-label"
+            onClick={() => {
+              setSoundOn(!soundOn)
+              forceRefresh((n) => n + 1)
+            }}
+          >
+            {soundOn ? 'On' : 'Off'}
+          </button>
+        </div>
 
         <div className="parent-danger">
           {confirmingReset ? (

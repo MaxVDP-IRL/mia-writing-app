@@ -1,6 +1,10 @@
 .star-rating {
-  font-size: 28px;
+  font-size: 30px;
   letter-spacing: 4px;
+}
+
+.star {
+  display: inline-block;
 }
 
 .star-filled {
@@ -9,4 +13,36 @@
 
 .star-empty {
   color: #e0d9c8;
+}
+
+.star-rating-celebrate .star-filled {
+  animation: star-pop 420ms ease-out both;
+}
+
+.star-rating-celebrate .star-filled:nth-child(2) {
+  animation-delay: 110ms;
+}
+
+.star-rating-celebrate .star-filled:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+@keyframes star-pop {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.45);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-rating-celebrate .star-filled {
+    animation: none;
+  }
 }

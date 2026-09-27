@@ -5,13 +5,19 @@ interface Props {
   item: TraceItem
   /** Index of the stroke she is being asked to draw now. */
   activeStroke: number
+  /**
+   * Once an item is mastered the guide fades back, so practising it again
+   * means writing more of it from memory — support is withdrawn gradually as
+   * she gets better, rather than all at once.
+   */
+  faded?: boolean
 }
 
 /**
  * The dotted guide underneath the tracing surface: ruled lines, the shape to
  * follow, and — for the stroke she's on — where to start and which way to go.
  */
-export function TraceGuide({ item, activeStroke }: Props) {
+export function TraceGuide({ item, activeStroke, faded = false }: Props) {
   const { width, height } = item.viewBox
   const active = item.strokes[activeStroke]
   const start = active?.points[0]
@@ -28,7 +34,11 @@ export function TraceGuide({ item, activeStroke }: Props) {
   }
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="trace-guide-svg" aria-hidden="true">
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className={`trace-guide-svg ${faded ? 'trace-guide-faded' : ''}`}
+      aria-hidden="true"
+    >
       <line x1={0} y1={XHEIGHT_TOP} x2={width} y2={XHEIGHT_TOP} className="guide-xheight" />
       <line x1={0} y1={BASELINE} x2={width} y2={BASELINE} className="guide-baseline" />
 
@@ -47,7 +57,8 @@ export function TraceGuide({ item, activeStroke }: Props) {
       {start && <circle cx={start.x} cy={start.y} r={8} className="start-dot" />}
       {angle !== null && heading && (
         <g transform={`translate(${heading.x}, ${heading.y}) rotate(${angle})`}>
-          <polygon points="0,-7 14,0 0,7" className="direction-arrow" />
+          {/* A notched dart: a plain triangle is nearly equilateral and doesn't read as pointing anywhere. */}
+          <polygon points="-6,-10 16,0 -6,10 0,0" className="direction-arrow" />
         </g>
       )}
     </svg>

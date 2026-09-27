@@ -1,0 +1,17 @@
+.item-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.item-preview-path {
+  fill: none;
+  stroke: #4a4438;
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.item-preview-dot {
+  fill: #4a4438;
+}

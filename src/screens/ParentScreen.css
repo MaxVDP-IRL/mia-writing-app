@@ -95,6 +95,36 @@
   white-space: nowrap;
 }
 
+.parent-setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #fff3d6;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.toggle-btn {
+  min-width: 64px;
+  padding: 8px 16px;
+  border: 2px solid #e3dccb;
+  border-radius: 20px;
+  background: #fff;
+  color: #6f6759;
+  font: inherit;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.toggle-btn-on {
+  border-color: #4caf50;
+  background: #4caf50;
+  color: #fff;
+}
+
 .parent-danger {
   margin-top: 28px;
   padding-top: 16px;

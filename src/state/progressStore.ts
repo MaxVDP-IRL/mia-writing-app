@@ -10,10 +10,12 @@ export interface ProgressState {
   seenStickers: string[]
   /** Local PIN gating the grown-ups screen. No account, never leaves the device. */
   pin: string | null
+  /** Success sounds after each attempt. On unless a grown-up turns them off. */
+  sound: boolean
 }
 
 function emptyState(): ProgressState {
-  return { items: {}, days: [], seenStickers: [], pin: null }
+  return { items: {}, days: [], seenStickers: [], pin: null, sound: true }
 }
 
 // Clamps to the valid 0-3 star range. Normal app use never produces an
@@ -67,6 +69,7 @@ function load(): ProgressState {
       days: readStringList(parsed?.days),
       seenStickers: readStringList(parsed?.seenStickers),
       pin: typeof parsed?.pin === 'string' ? parsed.pin : null,
+      sound: parsed?.sound !== false,
     }
   } catch {
     return emptyState()
@@ -137,7 +140,18 @@ export function setPin(pin: string): void {
   save(state)
 }
 
+export function getSoundOn(): boolean {
+  return load().sound
+}
+
+export function setSoundOn(on: boolean): void {
+  const state = load()
+  state.sound = on
+  save(state)
+}
+
+/** Erases what she has earned, but keeps the grown-ups' PIN and settings. */
 export function resetProgress(): void {
   const state = load()
-  save({ ...emptyState(), pin: state.pin })
+  save({ ...emptyState(), pin: state.pin, sound: state.sound })
 }

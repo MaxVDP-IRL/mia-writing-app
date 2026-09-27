@@ -45,6 +45,15 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Curly caterpillars' })).toBeInTheDocument()
   })
 
+  it('offers a demonstration of how to write the letter', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /Letters/ }))
+    await user.click(screen.getByRole('button', { name: /^Letter c/ }))
+
+    expect(screen.getByRole('button', { name: 'Watch how to write it' })).toBeInTheDocument()
+  })
+
   it('shows the sticker book with everything still locked', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -65,6 +74,21 @@ describe('App', () => {
 
     expect(screen.getByText('day streak')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reset progress' })).toBeInTheDocument()
+  })
+
+  it('lets a grown-up turn the sounds off', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('mia-writing-progress-v2', JSON.stringify({ items: {}, days: [], pin: '4321' }))
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Grown-ups' }))
+    await user.type(screen.getByLabelText('Enter your PIN'), '4321')
+    await user.click(screen.getByRole('button', { name: 'Unlock' }))
+
+    const toggle = screen.getByRole('switch', { name: 'Sounds after each go' })
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await user.click(toggle)
+    expect(screen.getByRole('switch', { name: 'Sounds after each go' })).toHaveAttribute('aria-checked', 'false')
+    expect(JSON.parse(localStorage.getItem('mia-writing-progress-v2')!).sound).toBe(false)
   })
 
   it('rejects the wrong PIN once one has been set', async () => {

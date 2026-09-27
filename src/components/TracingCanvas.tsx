@@ -13,10 +13,12 @@ interface Props {
   completedStrokes: Point[][]
   /** What she's being asked to draw next — a stray tap only counts for a dot. */
   expecting: Stroke['kind'] | undefined
+  /** She has put her finger down — e.g. to stop a demonstration that's playing. */
+  onStrokeStart?: () => void
   onStrokeComplete: (points: Point[]) => void
 }
 
-export function TracingCanvas({ viewBox, completedStrokes, expecting, onStrokeComplete }: Props) {
+export function TracingCanvas({ viewBox, completedStrokes, expecting, onStrokeStart, onStrokeComplete }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [points, setPoints] = useState<Point[]>([])
   const activePointerId = useRef<number | null>(null)
@@ -54,6 +56,7 @@ export function TracingCanvas({ viewBox, completedStrokes, expecting, onStrokeCo
     activePointerId.current = e.pointerId
     svgRef.current?.setPointerCapture(e.pointerId)
     setPoints([toSvgPoint(e.clientX, e.clientY)])
+    onStrokeStart?.()
   }
 
   function handlePointerMove(e: PointerEvent<SVGSVGElement>) {

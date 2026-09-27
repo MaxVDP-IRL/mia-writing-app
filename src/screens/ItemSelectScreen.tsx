@@ -1,3 +1,4 @@
+import { ItemPreview } from '../components/ItemPreview'
 import type { ItemKind, TraceItem } from '../content/types'
 import { getAllProgress } from '../state/progressStore'
 import { isItemUnlocked } from '../state/unlock'
@@ -58,7 +59,9 @@ export function ItemSelectScreen({ title, items, onSelect, onExit }: Props) {
                       unlocked ? '' : ', locked'
                     }`}
                   >
-                    <span className="item-tile-label">{item.label}</span>
+                    <span className="item-tile-preview">
+                      <ItemPreview item={item} />
+                    </span>
                     {unlocked ? (
                       <span className="item-tile-stars" aria-hidden="true">
                         {'★'.repeat(stars)}

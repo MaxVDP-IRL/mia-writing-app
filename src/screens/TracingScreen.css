@@ -5,12 +5,36 @@
   height: 100dvh;
 }
 
+.tracing-prompt-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
 .tracing-prompt {
-  margin: 10px 0 0;
+  margin: 0;
   font-size: 22px;
   font-weight: bold;
   text-align: center;
   color: #8b8271;
+}
+
+/* Replays the "watch me" demonstration. Big and round: a thumb target. */
+.watch-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0 0 0 4px;
+  border: none;
+  border-radius: 50%;
+  background: #4caf50;
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.3);
 }
 
 .trace-area {

@@ -5,11 +5,13 @@ import {
   getPin,
   getPracticeDays,
   getSeenStickers,
+  getSoundOn,
   getTotalStars,
   markStickersSeen,
   recordResult,
   resetProgress,
   setPin,
+  setSoundOn,
   todayIso,
 } from './progressStore'
 
@@ -90,6 +92,20 @@ describe('progressStore', () => {
     expect(getSeenStickers()).toEqual([])
     expect(getPracticeDays()).toEqual([])
     expect(getPin()).toBe('1234')
+  })
+
+  it('has sounds on unless a grown-up turns them off', () => {
+    expect(getSoundOn()).toBe(true)
+    setSoundOn(false)
+    expect(getSoundOn()).toBe(false)
+    recordResult('letter:c', 2)
+    expect(getSoundOn()).toBe(false)
+  })
+
+  it('keeps the sound setting through a progress reset', () => {
+    setSoundOn(false)
+    resetProgress()
+    expect(getSoundOn()).toBe(false)
   })
 
   it('formats today as an ISO date', () => {

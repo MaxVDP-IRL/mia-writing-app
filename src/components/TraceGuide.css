@@ -38,6 +38,12 @@
   stroke-dasharray: 10 12;
 }
 
+/* Mastered: the shape fades back so it's written more from memory. The start
+   dot and arrow stay, so she still knows where to begin. */
+.trace-guide-faded .guide-path {
+  opacity: 0.3;
+}
+
 .guide-tap {
   fill: none;
 }
