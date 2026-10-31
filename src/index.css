@@ -8,8 +8,9 @@ body {
   background: #fdfaf3;
   color: #3a3a3a;
   /* Scrolling must still work — the letter list is longer than a phone
-     screen. Only the tracing surface itself blocks touch gestures. This just
-     stops quick repeated taps from zooming the page. */
+     screen. The writing screen blocks pan, zoom and selection on its own
+     (see .tracing-screen). This just stops quick repeated taps from
+     zooming the page. */
   touch-action: manipulation;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;

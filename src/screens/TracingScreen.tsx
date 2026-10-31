@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { playResult, playSticker } from '../audio/sounds'
 import type { Point } from '../content/geometry'
 import { earnedStickers, type Sticker } from '../content/stickers'
@@ -36,6 +36,7 @@ function autoplayDemo(): boolean {
 }
 
 export function TracingScreen({ items, startIndex, onExit }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(startIndex)
   const [strokes, setStrokes] = useState<Point[][]>([])
   const [result, setResult] = useState<ScoreResult | null>(null)
@@ -53,6 +54,33 @@ export function TracingScreen({ items, startIndex, onExit }: Props) {
   // Judged on the stars it had when it opened, so the guide doesn't suddenly
   // fade mid-visit just because this attempt earned the third star.
   const [openedMastered, setOpenedMastered] = useState(() => getItemStars(items[startIndex].id) === 3)
+
+  // CSS on this screen is the main lock. Some iOS versions still show the
+  // selection highlight and magnifier until the touch is cancelled, and
+  // React's onTouchStart listener is passive so it cannot do that. Skipping
+  // buttons: preventDefault on their touchstart swallows the tap.
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+
+    const blockSelect = (event: Event) => {
+      event.preventDefault()
+    }
+
+    const blockTouch = (event: TouchEvent) => {
+      const node = event.target
+      const target = node instanceof Element ? node : node instanceof Node ? node.parentElement : null
+      if (!target || target.closest('button, input, textarea')) return
+      if (event.cancelable) event.preventDefault()
+    }
+
+    root.addEventListener('selectstart', blockSelect)
+    root.addEventListener('touchstart', blockTouch, { passive: false })
+    return () => {
+      root.removeEventListener('selectstart', blockSelect)
+      root.removeEventListener('touchstart', blockTouch)
+    }
+  }, [])
 
   function handleStrokeComplete(points: Point[]) {
     const next = [...strokes, points]
@@ -112,7 +140,7 @@ export function TracingScreen({ items, startIndex, onExit }: Props) {
   }
 
   return (
-    <div className="tracing-screen">
+    <div className="tracing-screen" ref={rootRef}>
       <div className="top-bar">
         <button className="exit-btn" onClick={onExit}>
           ← Back
